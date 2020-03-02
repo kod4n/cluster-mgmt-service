@@ -1,0 +1,8 @@
+{
+  "library": "retrofit2",
+  "dateLibrary": "java8",
+  "hideGenerationTimestamp": true,
+  "modelPackage": "io.cratekube.model",
+  "apiPackage": "io.cratekube.api",
+  "invokerPackage": "io.cratekube"
+}

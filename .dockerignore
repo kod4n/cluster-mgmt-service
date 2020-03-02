@@ -1,0 +1,12 @@
+*
+!.git
+!gradle
+!src
+!build.gradle
+!codenarc.groovy
+!gradle.properties
+!gradlew
+!settings.gradle
+!swagger-config.json
+!app.yml
+!entrypoint.sh

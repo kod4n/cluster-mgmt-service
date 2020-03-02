@@ -1,0 +1,31 @@
+project.ext {
+  httpscm = "https://github.com/${project.org}/${project.name}"
+  scmUrl = "git@github.com:${project.org}/${project.name}.git"
+  tracker = "${project.httpscm}/issues"
+  license = 'Apache-2.0'
+  releaseVersion = project.version.replaceAll('-SNAPSHOT', '')
+
+  pomConfig = {
+    delegate.name project.name
+    delegate.description project.description
+    url httpscm
+    licenses {
+      license {
+        name project.license
+        url "https://raw.githubusercontent.com/${project.org}/${project.name}/master/LICENSE"
+      }
+    }
+    scm {
+      connection project.httpscm
+      developerConnection "scm:git:${project.scmUrl}"
+      tag releaseVersion
+      url project.scmUrl
+    }
+    issueManagement { url project.tracker }
+    ciManagement { url "https://travis-ci.com/${project.org}/${project.name}" }
+    delegate.developers developers
+    delegate.contributors contributors
+  }
+  developers = {}
+  contributors = {}
+}
