@@ -1,2 +1,2 @@
-rootProject.name = 'dropwizard-groovy-template'
+rootProject.name = 'cluster-mgmt-service'
 include "${rootProject.name}-client"

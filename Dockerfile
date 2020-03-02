@@ -41,7 +41,7 @@ WORKDIR /app
 RUN apk --no-cache add libstdc++
 
 ## setup env var for the app name
-ENV CRATEKUBE_APP dropwizard-groovy-template
+ENV CRATEKUBE_APP cluster-mgmt-service
 
 ## add in files needed at runtime
 COPY app.yml entrypoint.sh ./
