@@ -7,6 +7,9 @@
 !src
 !src/**/*
 
+!docs
+!docs/**/*
+
 !ci
 !ci/*
 
