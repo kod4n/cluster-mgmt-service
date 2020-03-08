@@ -24,7 +24,7 @@ subprojects {
         artifact javadocJar
         groupId project.group
         artifactId project.name
-        version project.releaseVersion
+        version project.version
         pom.withXml {
           asNode().children().last() + pomConfig
         }

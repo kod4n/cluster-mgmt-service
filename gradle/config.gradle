@@ -3,7 +3,6 @@ project.ext {
   scmUrl = "git@github.com:${project.org}/${project.name}.git"
   tracker = "${project.httpscm}/issues"
   license = 'Apache-2.0'
-  releaseVersion = project.version.replaceAll('-SNAPSHOT', '')
 
   pomConfig = {
     delegate.name project.name
@@ -18,7 +17,7 @@ project.ext {
     scm {
       connection project.httpscm
       developerConnection "scm:git:${project.scmUrl}"
-      tag releaseVersion
+      tag project.version
       url project.scmUrl
     }
     issueManagement { url project.tracker }

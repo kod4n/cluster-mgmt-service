@@ -2,7 +2,7 @@
   "library": "retrofit2",
   "dateLibrary": "java8",
   "hideGenerationTimestamp": true,
-  "modelPackage": "io.cratekube.model",
-  "apiPackage": "io.cratekube.api",
-  "invokerPackage": "io.cratekube"
+  "modelPackage": "io.cratekube.cluster.client.model",
+  "apiPackage": "io.cratekube.cluster.client.api",
+  "invokerPackage": "io.cratekube.cluster.client"
 }

@@ -20,6 +20,8 @@ to avoid downloading a local distribution.  The commands below are helpful for b
 - `./gradlew build` compile and build the application
 - `./gradlew check` run static code analysis and test the application
 - `./gradlew shadowJar` builds a fat jar that can be used to run the Dropwizard application
+- `./gradlew buildClient` generates the API client code for the Dropwizard application
+- `./gradlew publishToMavenLocal` publishes any local artifacts to the local .m2 repository
 
 After you have generated the fat jar you can run your application with java using:
 ```bash
@@ -27,17 +29,17 @@ java -jar build/libs/cluster-mgmt-service-1.0.0-SNAPSHOT-all.jar
 ```
 
 ### Docker builds
-We strive to have our builds repeatable across development environment so we also provide a Docker build to generate the
-Dropwizard application.  The examples below should be executed from the root of the project.
+We strive to have our builds repeatable across development environments so we also provide a Docker build to generate 
+the Dropwizard application container.  The examples below should be executed from the root of the project.
 
-Running the base docker build run:
+Running the base docker build:
 ```bash
-docker run --target Build .
+docker run --target build .
 ```
 
 Generating the Dropwizard application docker image:
 ```bash
-docker run --target Package -t my-app .
+docker run -t cluster-mgmt-service --target package .
 ```
 
 ## Using the API client

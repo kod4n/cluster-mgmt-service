@@ -1,8 +1,9 @@
 plugins {
   id 'com.jfrog.bintray' version '1.8.4'
+  id 'com.jfrog.artifactory' version '4.14.1'
   id 'com.github.kt3k.coveralls' version '2.6.3'
-  id 'com.benjaminsproule.swagger' version '1.0.6'
-  id 'org.hidetake.swagger.generator' version '2.11.0'
+  id 'com.benjaminsproule.swagger' version '1.0.8'
+  id 'org.hidetake.swagger.generator' version '2.18.2'
   id 'com.github.johnrengelman.shadow' version '5.1.0'
 }
 
@@ -15,6 +16,7 @@ apply from: 'gradle/config.gradle'
 apply from: 'gradle/git.gradle'
 apply from: 'gradle/maven.gradle'
 apply from: 'gradle/bintray.gradle'
+apply from: 'gradle/artifactory.gradle'
 apply from: 'gradle/quality.gradle'
 
 repositories {
@@ -32,7 +34,7 @@ dependencies {
   implementation 'org.hamcrest:hamcrest-all:1.3'
   implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
-  swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.8'
+  swaggerCodegen 'io.swagger:swagger-codegen-cli:2.4.12'
 
   testImplementation 'cglib:cglib-nodep:3.2.6'
   testImplementation "io.dropwizard:dropwizard-testing:${dropwizardVersion}"
@@ -71,6 +73,7 @@ shadowJar {
 swagger {
   apiSource {
     springmvc = false
+    expandSuperTypes = false
     locations = [project.group]
     schemes = ['http', 'https']
     host = 'localhost:8080'
@@ -84,14 +87,5 @@ swagger {
   }
 }
 
-task fixGenerateSwaggerDocumentation {
-  doLast {
-    project.configurations.compileClasspath.resolve()
-           .collect { it.toURI().toURL() }
-           .each { buildscript.classLoader.addURL it }
-  }
-}
-
-generateSwaggerDocumentation.dependsOn fixGenerateSwaggerDocumentation
 resolveSwaggerTemplate.dependsOn generateSwaggerDocumentation
 buildClient.dependsOn generateSwaggerCode

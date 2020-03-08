@@ -1,0 +1,19 @@
+def jfrogDeployUser = project.findProperty('jfrogDeployUser') ?: System.env.JFROG_DEPLOY_USER
+def jfrogDeployKey = project.findProperty('jfrogDeployKey') ?: System.env.JFROG_DEPLOY_KEY
+
+if (jfrogDeployUser && jfrogDeployKey) {
+  artifactory {
+    contextUrl = project.snapshotUrl
+    publish {
+      repository {
+        repoKey = project.snapshotRepo
+        username = jfrogDeployUser
+        password = jfrogDeployKey
+      }
+      defaults {
+        publications('mavenPublication')
+        publishArtifacts = true
+      }
+    }
+  }
+}
