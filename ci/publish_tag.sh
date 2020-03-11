@@ -10,7 +10,7 @@ docker build --build-arg "TRAVIS=${TRAVIS}" --build-arg "TRAVIS_JOB_ID=${TRAVIS_
              --build-arg BINTRAY_PUBLISH=true --build-arg "APP_VERSION=${TRAVIS_TAG}" \
              --target publish .
 
-docker_tag="latest"
+docker_tag="${TRAVIS_TAG}"
 
 echo "[travis_deploy] dockerhub push for tag [${docker_tag}]"
 echo "${DOCKERHUB_PASS}" | docker login -u="${DOCKERHUB_USER}" --password-stdin
