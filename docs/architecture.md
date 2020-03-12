@@ -1,7 +1,7 @@
 # Cluster Management Service Architecture Design
 
 ## Overview  
-This document outlines the architecture for the Cluster Lifecycle Management Service.  
+This document outlines the architecture for the Cluster Management Service.  
 The Cluster Management Service will provide everything needed for creating and monitoring a 
 Kubernetes cluster and configuring it post-bootstrap for a customer.  
   
@@ -125,7 +125,7 @@ cloud EC2 {
 
 #### Security 
 
-![Security](https://www.plantuml.com/plantuml/img/jP9DYm8n38Rl_HLXplQ-U111Ryk2u54NAPquKwOVGvikZDB_RaPNS1Tal9XJ6nvUdf0i4wb8sLb1XYp2okP46E5BUTMWGq-mnVXZD8BabyxHq01hevgedF2XHgW-Fn9ihA9ZYEuUKC5P05UlTCT1K3qFlgDZxVGDawvn9DCDsFipXGxzGMLgJ-NxIXVnCWzIBc0tMguO3eujVcsOJAazT3WSZKKcvp3--yxybTy4Q_GmvTvVgJUeln3CvWyDFOEMg4_b_mv2hgStmD0RXfZEVJP3URYpYGsEanInH5_pILy0)  
+![Security](https://www.plantuml.com/plantuml/img/jP9DYy8m48Rl-HL3pvlxiWSfw4qMX3sgI4Z7DZGV9PaiT2N_VTDMTrMGUd4k2SF3opFCb864fsWqA_z-f4WZB7KCX1u-XHKr6hG4N-Y_bKJW-IUZLzJ3IedQ2yEign2AzNk0ZHPqTDvS0WeuCSZL2Tdc82WU1r_GeRPomhYf3V4m0Jjx8jUYFOX8pK_QZtHYJ_F0-GAsW-KomyvaYxDD9aDe3YtsHwKnanymDhfMfLlzZTDAzdFstKYzGFw9uC7zlo7Ve27gGhhVWelL_0uoz88XvdCVpP2kBcrcXyCaYPLeg_6yf_SN)  
 
 <details><summary>Show UML Code</summary>
 <p>
@@ -137,7 +137,7 @@ node "K8s Platform Cluster" {
     package "Cluster Management Service" {
         [cluster-mgmt-service\n{token_authz}]
     }
-    [cluster-mgmt-service\n{token_authz}] --> [K8s Customer Cluster\n{ssh_keyfile}] : ssh_pki
+    [cluster-mgmt-service\n{token_authz}] --> [K8s Customer Cluster\n{ssh_keyfile}] : {ssh_pki}
     package "Policy Management Service" {
         [policy-mgmt-service\n{token_authz}]
     }

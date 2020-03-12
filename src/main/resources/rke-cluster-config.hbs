@@ -1,0 +1,15 @@
+nodes:
+{{~#each rkeClusterNodes}}
+  - address: {{address}}
+    user: {{user}}
+    role: [{{join roles ","}}]
+{{~/each}}
+ssh_key_path: {{sshKeyPath}}
+services:
+  etcd:
+    snapshot: true
+    creation: 6h
+    retention: 24h
+  kube-api:
+    pod_security_policy: true
+    always_pull_images: true

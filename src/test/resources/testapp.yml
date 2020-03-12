@@ -1,10 +1,12 @@
 server:
   applicationConnectors:
-  - type: http
-    port: 9000
+    - type: http
+      port: 9000
+      maxRequestHeaderSize: ${MAX_REQ_HEADER_SIZE:-16KiB}
+      maxResponseHeaderSize: ${MAX_RESP_HEADER_SIZE:-16KiB}
   adminConnectors:
-  - type: http
-    port: 9001
+    - type: http
+      port: 9001
 
 logging:
   loggers:
@@ -12,8 +14,16 @@ logging:
     org.reflections: ERROR
 
 jerseyClient:
-  timeout: 5000ms
+  timeout: ${JERSEY_CLIENT_TIMEOUT:-5000ms}
+  connectionTimeout: ${JERESEY_CLIENT_CONNECT_TIMEOUT:-5000ms}
+  connectionRequestTimeout: ${JERESEY_CLIENT_CONNECT_REQUEST_TIMEOUT:-5000ms}
   gzipEnabledForRequests: false
 
 swagger:
-  resourcePackage: io.cratekube.example.resources
+  resourcePackage: io.cratekube.clustermgmt.resources
+
+rke:
+  nodeUser: ${RKE_NODE_USER:-ubuntu}
+  sshKeyPath: ${RKE_PRIVATE_KEY_PATH:~/.ssh/id_rsa}
+
+configLocation: ${CONFIG_LOCATION:-/app/config}

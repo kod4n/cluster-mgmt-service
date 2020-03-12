@@ -4,7 +4,13 @@
 FROM openjdk:8u212-jdk-alpine3.9 as build
 
 WORKDIR /app
-RUN apk --no-cache add bash
+RUN apk --no-cache add bash curl openssl &&\
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl &&\
+    mv kubectl /bin/kubectl &&\
+    chmod +x /bin/kubectl &&\
+    curl -L -o rke_linux-amd64  https://github.com/rancher/rke/releases/download/v0.3.2/rke_linux-amd64 &&\
+    mv rke_linux-amd64 /bin/rke &&\
+    chmod +x /bin/rke
 
 COPY gradle/wrapper ./gradle/wrapper
 COPY gradlew ./
