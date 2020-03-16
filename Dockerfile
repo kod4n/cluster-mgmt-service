@@ -16,7 +16,7 @@ COPY gradle/wrapper ./gradle/wrapper
 COPY gradlew ./
 RUN ./gradlew --no-daemon --version
 
-COPY build.gradle gradle.properties settings.gradle ./
+COPY build.gradle gradle.properties settings.gradle app.yml ./
 COPY gradle/*.gradle ./gradle/
 COPY .git ./.git/
 

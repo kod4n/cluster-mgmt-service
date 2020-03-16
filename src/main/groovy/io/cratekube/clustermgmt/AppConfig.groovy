@@ -1,6 +1,7 @@
 package io.cratekube.clustermgmt
 
 import io.cratekube.clustermgmt.config.RkeConfig
+import io.cratekube.clustermgmt.dropwizard.auth.ApiKeyAuthConfig
 import io.dropwizard.Configuration
 import io.dropwizard.client.JerseyClientConfiguration
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration
@@ -25,4 +26,8 @@ class AppConfig extends Configuration {
 
   @NotEmpty
   String configLocation
+
+  @Valid
+  @NotNull
+  ApiKeyAuthConfig auth
 }

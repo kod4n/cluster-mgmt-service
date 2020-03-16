@@ -2,9 +2,13 @@ package io.cratekube.clustermgmt.resources
 
 import groovy.util.logging.Slf4j
 import io.cratekube.clustermgmt.api.ManagedResourcesApi
+import io.cratekube.clustermgmt.dropwizard.auth.User
 import io.cratekube.clustermgmt.model.ManagedResource
+import io.dropwizard.auth.Auth
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiParam
 
+import javax.annotation.security.RolesAllowed
 import javax.inject.Inject
 import javax.validation.Valid
 import javax.ws.rs.Consumes
@@ -48,14 +52,17 @@ class ManagedResourcesResource {
    * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if a cluster does not exist
    */
   @POST
+  @RolesAllowed('admin')
   Response createManagedResource(
     @PathParam('envName') String envName,
     @PathParam('clusterName') String clusterName,
-    @Valid ManagedResource req
+    @Valid ManagedResource req,
+    @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
     require req, notNullValue()
+    require user, notNullValue()
 
     log.debug 'action [create-managed-resource]'
     return null
@@ -74,15 +81,18 @@ class ManagedResourcesResource {
    * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if a cluster does not exist
    */
   @DELETE
+  @RolesAllowed('admin')
   @Path('{resourceName}')
   Response deleteManagedResource(
     @PathParam('envName') String envName,
     @PathParam('clusterName') String clusterName,
-    @PathParam('resourceName') String resourceName
+    @PathParam('resourceName') String resourceName,
+    @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
     require resourceName, notEmptyString()
+    require user, notNullValue()
 
     log.debug 'action [delete-managed-resource]'
     return null

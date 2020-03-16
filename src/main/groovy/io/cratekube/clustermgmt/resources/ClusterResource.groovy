@@ -2,11 +2,15 @@ package io.cratekube.clustermgmt.resources
 
 import groovy.util.logging.Slf4j
 import io.cratekube.clustermgmt.api.ClusterApi
+import io.cratekube.clustermgmt.dropwizard.auth.User
 import io.cratekube.clustermgmt.model.Cluster
 import io.cratekube.clustermgmt.model.Kubeconfig
 import io.cratekube.clustermgmt.resources.request.BootstrapRequest
+import io.dropwizard.auth.Auth
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiParam
 
+import javax.annotation.security.RolesAllowed
 import javax.inject.Inject
 import javax.validation.Valid
 import javax.ws.rs.Consumes
@@ -48,12 +52,15 @@ class ClusterResource {
    * @throws io.cratekube.clustermgmt.api.exception.AlreadyExistsException if a cluster already exists
    */
   @POST
+  @RolesAllowed('admin')
   Response bootstrapCluster(
     @PathParam('envName') String envName,
-    @Valid BootstrapRequest req
+    @Valid BootstrapRequest req,
+    @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
     require req, notNullValue()
+    require user, notNullValue()
 
     log.debug 'action [bootstrap-cluster]'
     return null
@@ -73,13 +80,16 @@ class ClusterResource {
    * @throws io.cratekube.clustermgmt.api.exception.InProgressException if a cluster bootstrap is in progress
    */
   @DELETE
+  @RolesAllowed('admin')
   @Path('{clusterName}')
   Response deleteCluster(
     @PathParam('envName') String envName,
-    @PathParam('clusterName') String clusterName
+    @PathParam('clusterName') String clusterName,
+    @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
+    require user, notNullValue()
 
     log.debug 'action [delete-cluster]'
     return null

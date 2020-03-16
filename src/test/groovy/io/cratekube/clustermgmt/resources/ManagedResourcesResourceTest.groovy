@@ -1,6 +1,7 @@
 package io.cratekube.clustermgmt.resources
 
 import io.cratekube.clustermgmt.api.ManagedResourcesApi
+import io.cratekube.clustermgmt.dropwizard.auth.User
 import io.cratekube.clustermgmt.model.ManagedResource
 import org.valid4j.errors.RequireViolation
 import spock.lang.PendingFeature
@@ -30,24 +31,25 @@ class ManagedResourcesResourceTest extends Specification {
 
   def 'CreateManagedResource requires valid params'() {
     when:
-    subject.createManagedResource(env, cluster, req)
+    subject.createManagedResource(env, cluster, req, user)
 
     then:
     thrown RequireViolation
 
     where:
-    env   | cluster   | req
-    null  | null      | null
-    ''    | null      | null
-    'env' | null      | null
-    'env' | ''        | null
-    'env' | 'cluster' | null
+    env   | cluster   | req                   | user
+    null  | null      | null                  | null
+    ''    | null      | null                  | null
+    'env' | null      | null                  | null
+    'env' | ''        | null                  | null
+    'env' | 'cluster' | null                  | null
+    'env' | 'cluster' | new ManagedResource() | null
   }
 
   @PendingFeature
   def 'CreateManagedResource returns a valid result'() {
     when:
-    def result = subject.createManagedResource('test-env', 'test-cluster', new ManagedResource(name:'test-resource', config: 'test-config'))
+    def result = subject.createManagedResource('test-env', 'test-cluster', new ManagedResource(name:'test-resource', config: 'test-config'), new User())
 
     then:
     expect result, notNullValue()
@@ -56,25 +58,26 @@ class ManagedResourcesResourceTest extends Specification {
 
   def 'DeleteManagedResource requires valid params'() {
     when:
-    subject.deleteManagedResource(env, cluster, resource)
+    subject.deleteManagedResource(env, cluster, req, user)
 
     then:
     thrown RequireViolation
 
     where:
-    env   | cluster   | resource
-    null  | null      | null
-    ''    | null      | null
-    'env' | null      | null
-    'env' | ''        | null
-    'env' | 'cluster' | null
-    'env' | 'cluster' | ''
+    env   | cluster   | req        | user
+    null  | null      | null       | null
+    ''    | null      | null       | null
+    'env' | null      | null       | null
+    'env' | ''        | null       | null
+    'env' | 'cluster' | null       | null
+    'env' | 'cluster' | ''         | null
+    'env' | 'cluster' | 'resource' | null
   }
 
   @PendingFeature
   def 'DeleteManagedResource returns a valid result'() {
     when:
-    def result = subject.deleteManagedResource('test-env', 'test-cluster', 'test-resource')
+    def result = subject.deleteManagedResource('test-env', 'test-cluster', 'test-resource', new User())
 
     then:
     expect result, notNullValue()

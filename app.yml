@@ -21,3 +21,15 @@ rke:
   sshKeyPath: ${RKE_PRIVATE_KEY_PATH:~/.ssh/id_rsa}
 
 configLocation: ${CONFIG_LOCATION:-/app/config}
+
+auth:
+  apiKeys:
+    - name: admin
+      key: ${ADMIN_APIKEY:-eknvDrmcDtseeieSMTvngo}
+      roles: ['admin']
+
+jerseyClient:
+  timeout: ${JERSEY_CLIENT_TIMEOUT:-5000ms}
+  connectionTimeout: ${JERESEY_CLIENT_CONNECT_TIMEOUT:-5000ms}
+  connectionRequestTimeout: ${JERESEY_CLIENT_CONNECT_REQUEST_TIMEOUT:-5000ms}
+  gzipEnabledForRequests: false

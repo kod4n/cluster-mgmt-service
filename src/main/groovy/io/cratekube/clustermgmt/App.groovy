@@ -1,5 +1,7 @@
 package io.cratekube.clustermgmt
 
+import io.cratekube.clustermgmt.dropwizard.auth.ApiKeyAuthBundle
+import io.cratekube.clustermgmt.dropwizard.auth.ApiKeyAuthConfig
 import io.cratekube.clustermgmt.modules.ProductionModule
 import io.dropwizard.Application
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor
@@ -33,6 +35,13 @@ class App extends Application<AppConfig> {
         @Override
         protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(AppConfig configuration) {
           return configuration.swagger
+        }
+      }
+
+      addBundle new ApiKeyAuthBundle<AppConfig>() {
+        @Override
+        protected ApiKeyAuthConfig getApiKeyAuthConfig(AppConfig configuration) {
+          return configuration.auth
         }
       }
 

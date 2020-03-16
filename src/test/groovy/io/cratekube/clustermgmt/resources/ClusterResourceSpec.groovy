@@ -1,6 +1,7 @@
 package io.cratekube.clustermgmt.resources
 
 import io.cratekube.clustermgmt.api.ClusterApi
+import io.cratekube.clustermgmt.dropwizard.auth.User
 import io.cratekube.clustermgmt.resources.request.BootstrapRequest
 import org.valid4j.errors.RequireViolation
 import spock.lang.PendingFeature
@@ -30,7 +31,7 @@ class ClusterResourceSpec extends Specification {
 
   def 'BootstrapCluster requires valid parameters'() {
     when:
-    subject.bootstrapCluster(env, req)
+    subject.bootstrapCluster(env, req, new User())
 
     then:
     thrown RequireViolation
@@ -45,7 +46,7 @@ class ClusterResourceSpec extends Specification {
   @PendingFeature
   def 'BootstrapCluster returns a valid result'() {
     when:
-    def result = subject.bootstrapCluster('test-env', new BootstrapRequest('test-cluster', ['test.io', 'test-2.io']))
+    def result = subject.bootstrapCluster('test-env', new BootstrapRequest(clusterName: 'test-cluster', hostnames: ['test.io', 'test-2.io']), new User())
 
     then:
     expect result, notNullValue()
@@ -54,23 +55,24 @@ class ClusterResourceSpec extends Specification {
 
   def 'DeleteCluster requires valid parameters'() {
     when:
-    subject.deleteCluster(env, cluster)
+    subject.deleteCluster(env, cluster, user)
 
     then:
     thrown RequireViolation
 
     where:
-    env   | cluster
-    null  | null
-    ''    | null
-    'env' | null
-    'env' | ''
+    env   | cluster   | user
+    null  | null      | null
+    ''    | null      | null
+    'env' | null      | null
+    'env' | ''        | null
+    'env' | 'cluster' | null
   }
 
   @PendingFeature
   def 'DeleteCluster returns a valid result'() {
     when:
-    def result = subject.deleteCluster('test-env', 'test-cluster')
+    def result = subject.deleteCluster('test-env', 'test-cluster', new User())
 
     then:
     expect result, notNullValue()
