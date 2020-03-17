@@ -13,7 +13,7 @@ interface ClusterApi {
   /**
    * Bootstraps a cluster.
    * <p>If the cluster has already been created a {@link AlreadyExistsException} will be thrown.</p>
-   * <p>If the cluster is being bootstrapped a {@link InProgressException} will be thrown.</p>
+   * <p>If the cluster is being bootstrapped or deleted a {@link InProgressException} will be thrown.</p>
    *
    * @param envName {@code non-empty} environment name
    * @param clusterName {@code non-empty} cluster name
@@ -27,7 +27,7 @@ interface ClusterApi {
   /**
    * Deletes a cluster.
    * <p>If no cluster exists a {@link NotFoundException} will be thrown.</p>
-   * <p>If the cluster is being bootstrapped a {@link InProgressException} will be thrown.</p>
+   * <p>If the cluster is being bootstrapped or deleted a {@link InProgressException} will be thrown.</p>
    *
    * @param envName {@code non-empty} name of the environment cluster will live in
    * @param clusterName {@code non-empty} name of cluster
@@ -55,7 +55,7 @@ interface ClusterApi {
    * <p>This additional kubeconfig should be created directly after cluster
    * bootstrap to distribute for access to the customer cluster.</p>
    * <p>If the cluster is not found a {@link NotFoundException} will be thrown.</p>
-   * <p>If the cluster is being bootstrapped a {@link InProgressException} will be thrown.</p>
+   * <p>If the cluster is being bootstrapped or deleted a {@link InProgressException} will be thrown.</p>
    *
    * @param envName {@code non-empty} name of the environment cluster lives in
    * @param clusterName {@code non-empty} name of cluster

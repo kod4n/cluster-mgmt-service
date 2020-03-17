@@ -21,6 +21,7 @@ import java.util.concurrent.Executor
 import static org.hamcrest.Matchers.allOf
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.not
+import static org.hamcrest.core.Every.everyItem
 import static org.hamcrest.core.IsNull.notNullValue
 import static org.valid4j.Assertive.require
 import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
@@ -34,7 +35,7 @@ import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
 class ClusterService implements ClusterApi {
   FileSystemManager fs
   ProcessExecutor rke
-  ManagedResourcesApi services
+  ManagedResourcesApi resources
   AppConfig config
 
   // for async operations
@@ -43,11 +44,11 @@ class ClusterService implements ClusterApi {
   Map<String, Cluster> clusterCache
 
   @Inject
-  ClusterService(FileSystemManager fs, @ClusterProcessExecutor ProcessExecutor rke, ManagedResourcesApi services,
+  ClusterService(FileSystemManager fs, @ClusterProcessExecutor ProcessExecutor rke, ManagedResourcesApi resources,
                  AppConfig config, @ClusterExecutor Executor executor, @ClusterCache Map<String, Cluster> clusterCache) {
     this.fs = require fs, notNullValue()
     this.rke = require rke, notNullValue()
-    this.services = require services, notNullValue()
+    this.resources = require resources, notNullValue()
     this.config = require config, notNullValue()
     this.executor = require executor, notNullValue()
     this.clusterCache = require clusterCache, notNullValue()
@@ -58,7 +59,7 @@ class ClusterService implements ClusterApi {
     throws AlreadyExistsException, InProgressException {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
-    require hostnames, allOf(notNullValue(), not(empty()))
+    require hostnames, allOf(notNullValue(), not(empty()), everyItem(notEmptyString()))
 
     // call getCluster to look for an existing cluster status object in the in-memory LRU cache and throw InProgressException if it is still processing
     // and throw AlreadyExistsException if the desired cluster already exists
@@ -75,7 +76,7 @@ class ClusterService implements ClusterApi {
 
     // run `rke up` using the generated config file in the cluster name directory and update the node statuses
 
-    // deploy addition k8s resources required for configuring cluster using the ManagedServicesApi
+    // deploy addition k8s resources required for configuring cluster using the ManagedResourcesApi
   }
 
   @Override
@@ -85,7 +86,7 @@ class ClusterService implements ClusterApi {
     require clusterName, notEmptyString()
 
     // call getCluster to look for an existing cluster object in the in-memory LRU cache and throw InProgressException if it is still processing
-    // and throw NotFoundException if the desired cluster already exists
+    // and throw NotFoundException if the desired cluster does not exist
     // config file should be saved
     // /environment/{envName}/cluster/{clustName}/cluster.yml
 

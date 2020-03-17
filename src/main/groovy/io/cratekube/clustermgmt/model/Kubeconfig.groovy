@@ -3,7 +3,7 @@ package io.cratekube.clustermgmt.model
 import groovy.transform.Immutable
 
 /**
- * Customers kubeconfig for a cluster.
+ * Wrapper of kubeconfig for a cluster.
  */
 @Immutable
 class Kubeconfig {

@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.com/cratekube/cluster-mgmt-service.svg?branch=master)](https://travis-ci.com/cratekube/cluster-mgmt-service)
 [![Coverage Status](https://coveralls.io/repos/github/cratekube/cluster-mgmt-service/badge.svg?branch=master)](https://coveralls.io/github/cratekube/cluster-mgmt-service?branch=master)
 
-A service to manage cluster configuration updates and drift self-repair
+A service that manages Kubernetes cluster creation and initial configuration, deletion and monitoring.
 
 ## Configuration
 Internal and external services are configured by extending the Dropwizard application configuration with additional

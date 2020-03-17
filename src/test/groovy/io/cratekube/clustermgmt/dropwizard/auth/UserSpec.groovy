@@ -5,7 +5,7 @@ import spock.lang.Subject
 
 import javax.ws.rs.ForbiddenException
 
-class UserTest extends Specification {
+class UserSpec extends Specification {
   @Subject User subject
   List<String> roles
 

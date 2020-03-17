@@ -49,7 +49,7 @@ class ManagedResourcesResource {
    * @return 201 response and set location header when a cluster creation is initiated, a 404 if the cluster does not exist or a 409 response if the managed resource exists already or creation is in progress
    * @throws io.cratekube.clustermgmt.api.exception.InProgressException if the managed resource creation is in progress
    * @throws io.cratekube.clustermgmt.api.exception.AlreadyExistsException if the managed resource already exists
-   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if a cluster does not exist
+   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if the cluster does not exist
    */
   @POST
   @RolesAllowed('admin')
@@ -77,8 +77,7 @@ class ManagedResourcesResource {
    * @param resourceName {@code non-empty} managed resource name
    * @return a 202 response and set location header when a managed resource deletion is initiated, a 404 if the cluster or managed resource does not exist or a 409 response if the managed resource creation is in progress
    * @throws io.cratekube.clustermgmt.api.exception.InProgressException if the managed resource creation is in progress
-   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if managed resource does not exist
-   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if a cluster does not exist
+   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if the cluster or managed resource does not exist
    */
   @DELETE
   @RolesAllowed('admin')
@@ -106,8 +105,7 @@ class ManagedResourcesResource {
    * @param clusterName {@code non-empty} cluster name
    * @param resourceName {@code non-empty} managed resource name
    * @return the managed resource
-   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if no cluster exists
-   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if managed resource does not exist
+   * @throws io.cratekube.clustermgmt.api.exception.NotFoundException if no cluster exists or the managed resource does not exist
    */
   @GET
   @Path('{resourceName}')

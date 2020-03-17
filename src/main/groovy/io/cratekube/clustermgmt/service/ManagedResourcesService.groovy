@@ -33,7 +33,7 @@ class ManagedResourcesService implements ManagedResourcesApi {
 
   // for async operations
   Executor executor
-  /** map of envName/clusterName to their managed services. */
+  /** map of envName/clusterName to their managed resources. */
   Map<String, List<ManagedResource>> managedResourceCache
 
   @Inject
@@ -47,7 +47,8 @@ class ManagedResourcesService implements ManagedResourcesApi {
   }
 
   @Override
-  void bootstrapManagedResources(String envName, String clusterName) throws NotFoundException {
+  void bootstrapManagedResources(String envName, String clusterName)
+    throws NotFoundException, AlreadyExistsException {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
 

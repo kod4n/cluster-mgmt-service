@@ -7,6 +7,10 @@ import groovy.transform.Immutable
  */
 @Immutable
 class ClusterRoleBinding {
+  /** cluster role binding name */
+  String name
   /** service account name */
   String serviceAccountName
+  /** service account namespace */
+  String namespaceName
 }

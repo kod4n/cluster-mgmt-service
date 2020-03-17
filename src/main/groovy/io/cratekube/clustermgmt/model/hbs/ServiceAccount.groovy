@@ -10,5 +10,5 @@ class ServiceAccount {
   /** service account name */
   String name
   /** service account namespace */
-  String namespace
+  String namespaceName
 }

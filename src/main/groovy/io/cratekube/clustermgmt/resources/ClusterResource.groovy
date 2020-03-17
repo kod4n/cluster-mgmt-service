@@ -48,7 +48,7 @@ class ClusterResource {
    * @param envName {@code non-empty} environment name
    * @param req {@code non-null} bootstrap request for cluster
    * @return 201 response and set location header when a cluster creation is initiated, 409 response if a request is in progress, a cluster already exists or if the requested zone is not supported
-   * @throws io.cratekube.clustermgmt.api.exception.InProgressException if a cluster bootstrap is in progress
+   * @throws io.cratekube.clustermgmt.api.exception.InProgressException if a cluster bootstrap is in progress for a {@link BootstrapRequest#clusterName}
    * @throws io.cratekube.clustermgmt.api.exception.AlreadyExistsException if a cluster already exists
    */
   @POST

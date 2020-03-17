@@ -49,6 +49,7 @@ ruleset {
   ruleset('rulesets/size.xml') {
     'CrapMetric' enabled: false
     'ParameterCount' enabled: false
+    'AbcMetric' doNotApplyToFilesMatching: /.*(Spec|Test)\.groovy/
   }
   ruleset('rulesets/unnecessary.xml') {
     'UnnecessaryReturnKeyword' enabled: false

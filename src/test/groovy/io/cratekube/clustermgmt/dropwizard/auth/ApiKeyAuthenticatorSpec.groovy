@@ -8,7 +8,7 @@ import spock.lang.Unroll
 import static org.hamcrest.Matchers.equalTo
 import static spock.util.matcher.HamcrestSupport.expect
 
-class ApiKeyAuthenticatorTest extends Specification {
+class ApiKeyAuthenticatorSpec extends Specification {
   @Subject ApiKeyAuthenticator subject
   List<ApiKey> apiKeys
 
