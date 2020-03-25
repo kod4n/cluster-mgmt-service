@@ -15,13 +15,11 @@ import org.apache.commons.vfs2.FileContent
 import org.apache.commons.vfs2.FileObject
 import org.apache.commons.vfs2.FileSystemManager
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 
 import java.util.concurrent.Executor
 
-import static org.hamcrest.Matchers.containsInAnyOrder
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.everyItem
 import static org.hamcrest.Matchers.hasKey
@@ -85,15 +83,17 @@ class ClusterServiceSpec extends Specification {
     'env' | 'cluster' | ['', ' ']
   }
 
-  @PendingFeature
   def 'BootstrapCluster should bootstrap a new cluster and place it in cache when one does not exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def hostnms = ['test.io', 'test-2.io']
-    // cluster does not exist
-    subject.getCluster(environmentNm, clusterNm) >> {throw new NotFoundException()}
-
+    // cluster not in cache by default
+    // mock kubeconfig does not exist on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> false
+    }
     // mock for handlebars templateing calls to create cluster config
     String clusterFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/cluster.yml"
     fs.resolveFile(clusterFilePath) >> Mock(FileObject) {
@@ -107,7 +107,7 @@ class ClusterServiceSpec extends Specification {
 
     then:
     1 * rke.exec('up', '--config', "${clusterFilePath}") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
     1 * managedResourcesApi.bootstrapManagedResources(environmentNm, clusterNm)
@@ -115,14 +115,13 @@ class ClusterServiceSpec extends Specification {
     expect clusterCache["${environmentNm}/${clusterNm}".toString()].nodes, everyItem(hasProperty('status', equalTo(Status.COMPLETED)))
   }
 
-  @PendingFeature
   def 'BootstrapCluster should throw InProgressException if cluster operation is in progress'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def hostnms = ['test.io', 'test-2.io']
     // cluster bootstrap is in progress
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(nodes: hostnms.collect {new ClusterNode(it, Status.IN_PROGRESS)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(nodes: hostnms.collect {new ClusterNode(hostname: it, status: Status.IN_PROGRESS)})
 
     when:
     subject.bootstrapCluster(environmentNm, clusterNm, hostnms)
@@ -131,13 +130,12 @@ class ClusterServiceSpec extends Specification {
     thrown InProgressException
   }
 
-  @PendingFeature
   def 'BootstrapCluster should throw AlreadyExistsException if cluster already exists in cache as completed'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def hostnms = ['test.io', 'test-2.io']
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(nodes: hostnms.collect {new ClusterNode(it, Status.COMPLETED)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(nodes: hostnms.collect {new ClusterNode(hostname: it, status: Status.COMPLETED)})
 
     when:
     subject.bootstrapCluster(environmentNm, clusterNm, hostnms)
@@ -161,7 +159,6 @@ class ClusterServiceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
   def 'DestroyCluster should destroy a cluster, remove file and null in cache'() {
     given:
     def environmentNm = 'test-env'
@@ -169,30 +166,29 @@ class ClusterServiceSpec extends Specification {
     def hostnms = ['test.io', 'test-2.io']
     String clusterPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}"
     String clusterFilePath = "${clusterPath}/cluster.yml"
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(nodes: hostnms.collect {new ClusterNode(it, Status.COMPLETED)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(nodes: hostnms.collect {new ClusterNode(hostname: it, status: Status.COMPLETED)})
 
     when:
     subject.destroyCluster(environmentNm, clusterNm)
 
     then:
-    1 * rke.exec('remove', '--config', "${clusterFilePath}") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * rke.exec('remove', '--force --config', "${clusterFilePath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
     1 * fs.resolveFile(clusterPath) >> Mock(FileObject) {
-      1 * delete()
+      1 * deleteAll()
     }
     expect clusterCache["${environmentNm}/${clusterNm}".toString()], nullValue()
   }
 
-  @PendingFeature
   def 'DestroyCluster should throw InProgressException if cluster operation is in progress'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def hostnms = ['test.io', 'test-2.io']
     // cluster bootstrap is in progress
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(nodes: hostnms.collect {new ClusterNode(it, Status.IN_PROGRESS)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(nodes: hostnms.collect {new ClusterNode(hostname: it, status: Status.IN_PROGRESS)})
 
     when:
     subject.destroyCluster(environmentNm, clusterNm)
@@ -201,14 +197,16 @@ class ClusterServiceSpec extends Specification {
     thrown InProgressException
   }
 
-  @PendingFeature
   def 'DestroyCluster should throw NotFoundException if cluster is not found'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
-    // cluster bootstrap is in progress
-    subject.getCluster(environmentNm, clusterNm) >> {throw new NotFoundException()}
-
+    // cluster not in cache by default
+    // mock kubeconfig does not exist on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> false
+    }
     when:
     subject.destroyCluster(environmentNm, clusterNm)
 
@@ -231,7 +229,6 @@ class ClusterServiceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
   def 'GetCluster returns a cluster when one exist on filesystem and not in cache'() {
     given:
     def environmentNm = 'test-env'
@@ -261,7 +258,7 @@ class ClusterServiceSpec extends Specification {
     // mock cluster config from filesystem
     String clusterFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/cluster.yml"
     def inStream = GroovyMock(InputStream) {
-      text >> clusterCfg
+      it.text >> clusterCfg
     }
     fs.resolveFile(clusterFilePath) >> Mock(FileObject) {
       getContent() >> Mock(FileContent) {
@@ -278,18 +275,22 @@ class ClusterServiceSpec extends Specification {
       expect cluster.name, equalTo(clusterNm)
       expect cluster.envName, equalTo(environmentNm)
       expect cluster.config, equalTo(clusterCfg)
-      expect cluster.nodes, containsInAnyOrder(['test.io', 'test-2.io'].collect {new ClusterNode(it, Status.COMPLETED)}.toArray())
+      expect cluster.nodes, everyItem(hasProperty('status', equalTo(Status.COMPLETED)))
     }
   }
 
-  @PendingFeature
   def 'GetCluster returns a cluster when one exist in cache'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def clusterCfg = 'test cluster config yaml'
     def hostnms = ['test.io', 'test-2.io']
-    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(environmentNm, clusterNm, clusterCfg, hostnms.collect {new ClusterNode(it, Status.COMPLETED)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(
+      envName: environmentNm,
+      name: clusterNm,
+      config: clusterCfg,
+      nodes: hostnms.collect {new ClusterNode(hostname:  it, status: Status.COMPLETED)}
+    )
 
     when:
     def cluster = subject.getCluster(environmentNm, clusterNm)
@@ -300,11 +301,10 @@ class ClusterServiceSpec extends Specification {
       expect cluster.name, equalTo(clusterNm)
       expect cluster.envName, equalTo(environmentNm)
       expect cluster.config, equalTo(clusterCfg)
-      expect cluster.nodes, containsInAnyOrder(['test.io', 'test-2.io'].collect {new ClusterNode(it, Status.COMPLETED)}.toArray())
+      expect cluster.nodes, everyItem(hasProperty('status', equalTo(Status.COMPLETED)))
     }
   }
 
-  @PendingFeature
   def 'GetCluster throws NotFoundException when no cluster exists in cache or on filesystem'() {
     given:
     def environmentNm = 'test-env'
@@ -338,23 +338,28 @@ class ClusterServiceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
   def 'GetCustomerKubeconfig returns a customer kubeconfig'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def clusterCfg = 'test cluster config yaml'
     def hostnms = ['test.io', 'test-2.io']
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(environmentNm, clusterNm, clusterCfg, hostnms.collect {new ClusterNode(it, Status.COMPLETED)})
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(
+      envName: environmentNm,
+      name: clusterNm,
+      config: clusterCfg,
+      nodes: hostnms.collect {new ClusterNode(hostname:  it, status: Status.COMPLETED)}
+    )
 
-    String customerKubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/customer-kubeconfig.yml"
+    String customerKubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/customer_kube_config.yml"
     def inStream = GroovyMock(InputStream) {
-      text >> clusterCfg
+      it.text >> clusterCfg
     }
     fs.resolveFile(customerKubeconfigPath) >> Mock(FileObject) {
       getContent() >> Mock(FileContent) {
         getInputStream() >> inStream
       }
+      exists() >> true
     }
 
     when:
@@ -365,12 +370,16 @@ class ClusterServiceSpec extends Specification {
     expect result.kubeconfig, equalTo(clusterCfg)
   }
 
-  @PendingFeature
   def 'GetCustomerKubeconfig throws a NotFoundException if a cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
-    subject.getCluster(environmentNm, clusterNm) >> {throw new NotFoundException()}
+    // cache defaults to empty
+    // mock kubeconfig does not exists on filesystem
+    String kubeFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeFilePath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.getCustomerKubeconfig(environmentNm, clusterNm)
@@ -379,14 +388,19 @@ class ClusterServiceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
   def 'GetCustomerKubeconfig throws a InProgressException if a cluster operation is in progress'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def clusterCfg = 'test cluster config yaml'
     def hostnms = ['test.io', 'test-2.io']
-    subject.getCluster(environmentNm, clusterNm) >> new Cluster(environmentNm, clusterNm, clusterCfg, hostnms.collect {new ClusterNode(it, Status.IN_PROGRESS)})
+    // cluster bootstrap is in progress
+    clusterCache["${environmentNm}/${clusterNm}".toString()] = new Cluster(
+      envName: environmentNm,
+      name: clusterNm,
+      config: clusterCfg,
+      nodes: hostnms.collect {new ClusterNode(hostname:  it, status: Status.IN_PROGRESS)}
+    )
 
     when:
     subject.getCustomerKubeconfig(environmentNm, clusterNm)

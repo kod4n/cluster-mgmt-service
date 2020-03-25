@@ -54,7 +54,7 @@ interface ClusterApi {
    * Retrieves a customers kubeconfig.
    * <p>This additional kubeconfig should be created directly after cluster
    * bootstrap to distribute for access to the customer cluster.</p>
-   * <p>If the cluster is not found a {@link NotFoundException} will be thrown.</p>
+   * <p>If the cluster or customer kubeconfig is not found a {@link NotFoundException} will be thrown.</p>
    * <p>If the cluster is being bootstrapped or deleted a {@link InProgressException} will be thrown.</p>
    *
    * @param envName {@code non-empty} name of the environment cluster lives in

@@ -38,7 +38,7 @@ interface ManagedResourcesApi {
 
   /**
    * Removes a managed resource from an existing cluster.
-   * <p>If the cluster is not found a {@link NotFoundException} will be thrown.</p>
+   * <p>If the cluster or resource is not found a {@link NotFoundException} will be thrown.</p>
    * <p>If the managed resource is being created or deleted a {@link InProgressException} will be thrown.</p>
    *
    * @param envName {@code non-empty} name of the environment cluster lives in

@@ -5,7 +5,28 @@
 [![Build Status](https://travis-ci.com/cratekube/cluster-mgmt-service.svg?branch=master)](https://travis-ci.com/cratekube/cluster-mgmt-service)
 [![Coverage Status](https://coveralls.io/repos/github/cratekube/cluster-mgmt-service/badge.svg?branch=master)](https://coveralls.io/github/cratekube/cluster-mgmt-service?branch=master)
 
-A service that manages Kubernetes cluster creation and initial configuration, deletion and monitoring.
+A service that manages Kubernetes cluster creation and initial configuration, deletion and monitoring.  
+
+Clusters are bootstrapped using [RKE](https://rancher.com/docs/rke/latest/en/) by submitting a request with the desired cluster name and the list of hostnames where the cluster will reside. 
+A successful bootstrap request will result in a Kubernetes cluster on the provided hosts and Managed Resources being deployed to that cluster (a service account and a namespace). 
+A Cluster bootstrap request also generates a kubeconfig file to interact with the cluster.  
+
+Managed Resources are able to be deployed individually as well as they can be any Kubernetes yaml that can be applied.  
+
+This service uses a directory to store and manage the state of Clusters and Managed Resources for an environment. 
+This directory is configurable through the environment variable `CONFIG_LOCATION` and should be treated as persistent storage as it is the source of truth for Clusters and Managed Resources.
+
+## Endpoints
+    POST    /environment/{envName}/cluster Bootstraps a cluster.
+    DELETE  /environment/{envName}/cluster/{clusterName} Deletes a cluster.
+    GET     /environment/{envName}/cluster/{clusterName} Retrieves a cluster
+    GET     /environment/{envName}/cluster/{clusterName}/kubeconfig/customer Retrieves a kubeconfig file for cluster interation.
+    GET     /environment/{envName}/cluster/{clusterName}/resource Retrieves all Managed Resource for a cluster
+    POST    /environment/{envName}/cluster/{clusterName}/resource Creates a Managed Resource
+    DELETE  /environment/{envName}/cluster/{clusterName}/resource/{resourceName} Deletes a Managed Resource
+    GET     /environment/{envName}/cluster/{clusterName}/resource/{resourceName} Retrieves a specific Managed Resource
+    GET     /swagger Swagger UI
+    GET     /swagger.{type:json|yaml} Swagger Spec
 
 ## Configuration
 Internal and external services are configured by extending the Dropwizard application configuration with additional

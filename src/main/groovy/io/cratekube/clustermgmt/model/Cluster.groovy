@@ -1,11 +1,8 @@
 package io.cratekube.clustermgmt.model
 
-import groovy.transform.Immutable
-
 /**
  * Represents properties and configuration for a cluster.
  */
-@Immutable
 class Cluster {
   /** environment name */
   String envName
@@ -17,7 +14,6 @@ class Cluster {
   List<ClusterNode> nodes
 }
 
-@Immutable
 class ClusterNode {
   /** hostname of the node */
   String hostname

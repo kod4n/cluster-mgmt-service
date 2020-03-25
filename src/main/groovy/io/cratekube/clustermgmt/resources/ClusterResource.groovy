@@ -22,6 +22,8 @@ import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.Response
 
+import static javax.ws.rs.core.Response.accepted
+import static javax.ws.rs.core.Response.created
 import static org.hamcrest.core.IsNull.notNullValue
 import static org.valid4j.Assertive.require
 import static org.valid4j.matchers.ArgumentMatchers.notEmptyString
@@ -46,7 +48,7 @@ class ClusterResource {
    * <p>If a cluster bootstrap is in progress or already exists a 409 response will be returned.</p>
    *
    * @param envName {@code non-empty} environment name
-   * @param req {@code non-null} bootstrap request for cluster
+   * @param bootstrapRequest {@code non-null} bootstrap request for cluster
    * @return 201 response and set location header when a cluster creation is initiated, 409 response if a request is in progress, a cluster already exists or if the requested zone is not supported
    * @throws io.cratekube.clustermgmt.api.exception.InProgressException if a cluster bootstrap is in progress for a {@link BootstrapRequest#clusterName}
    * @throws io.cratekube.clustermgmt.api.exception.AlreadyExistsException if a cluster already exists
@@ -55,15 +57,19 @@ class ClusterResource {
   @RolesAllowed('admin')
   Response bootstrapCluster(
     @PathParam('envName') String envName,
-    @Valid BootstrapRequest req,
+    @Valid BootstrapRequest bootstrapRequest,
     @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
-    require req, notNullValue()
+    require bootstrapRequest, notNullValue()
     require user, notNullValue()
 
-    log.debug 'action [bootstrap-cluster]'
-    return null
+    log.debug 'action [bootstrap-cluster]. Environment [{}]. BootstrapRequest=[{}]', envName, bootstrapRequest
+
+    return bootstrapRequest.with {
+      clusters.bootstrapCluster(envName, clusterName, hostnames)
+      created("/environment/${envName}/cluster/${clusterName}".toURI()).build()
+    }
   }
 
   /**
@@ -91,8 +97,10 @@ class ClusterResource {
     require clusterName, notEmptyString()
     require user, notNullValue()
 
-    log.debug 'action [delete-cluster]'
-    return null
+    log.debug 'action [delete-cluster]. Environment [{}] Cluster [{}]', envName, clusterName
+
+    clusters.destroyCluster(envName, clusterName)
+    return accepted().location("/environment/${envName}/cluster/${clusterName}".toURI()).build()
   }
 
   /**
@@ -113,8 +121,9 @@ class ClusterResource {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
 
-    log.debug 'action [get-cluster]'
-    return null
+    log.debug 'action [get-cluster]. Environment [{}] Cluster [{}]', envName, clusterName
+
+    return clusters.getCluster(envName, clusterName)
   }
 
   /**
@@ -137,7 +146,7 @@ class ClusterResource {
     require envName, notEmptyString()
     require clusterName, notEmptyString()
 
-    log.debug 'action [get-kubeconfig]'
-    return null
+    log.debug 'action [get-kubeconfig]. Environment [{}] Cluster [{}]', envName, clusterName
+    return clusters.getCustomerKubeconfig(envName, clusterName)
   }
 }

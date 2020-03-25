@@ -11,7 +11,6 @@ import io.cratekube.clustermgmt.model.Kubeconfig
 import io.cratekube.clustermgmt.model.Status
 import io.cratekube.clustermgmt.resources.request.BootstrapRequest
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -52,8 +51,7 @@ class ClusterResourceSpec extends Specification {
     'env' | new BootstrapRequest() | null
   }
 
-  @PendingFeature
-  def 'BootstrapCluster returns a valid result'() {
+def 'BootstrapCluster returns a valid result'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -76,8 +74,7 @@ class ClusterResourceSpec extends Specification {
     }
   }
 
-  @PendingFeature
-  def 'BootstrapCluster throws a InProgressException if a bootstrap is in progress for a cluster'() {
+def 'BootstrapCluster throws a InProgressException if a bootstrap is in progress for a cluster'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -95,8 +92,7 @@ class ClusterResourceSpec extends Specification {
     thrown InProgressException
   }
 
-  @PendingFeature
-  def 'BootstrapCluster throws a AlreadyExistsException if a cluster already exists'() {
+def 'BootstrapCluster throws a AlreadyExistsException if a cluster already exists'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -130,8 +126,7 @@ class ClusterResourceSpec extends Specification {
     'env' | 'cluster' | null
   }
 
-  @PendingFeature
-  def 'DeleteCluster returns a valid result'() {
+def 'DeleteCluster returns a valid result'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -149,8 +144,7 @@ class ClusterResourceSpec extends Specification {
     }
   }
 
-  @PendingFeature
-  def 'DeleteCluster throws a NotFoundException if no cluster exists'() {
+def 'DeleteCluster throws a NotFoundException if no cluster exists'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -167,8 +161,7 @@ class ClusterResourceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
-  def 'DeleteCluster throws a InProgressException if a cluster bootstrap is in progress'() {
+def 'DeleteCluster throws a InProgressException if a cluster bootstrap is in progress'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -200,18 +193,17 @@ class ClusterResourceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
-  def 'GetCluster returns a cluster'() {
+def 'GetCluster returns a cluster'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def clusterConfig = 'cluster config yaml'
-    def clusterNodes = [new ClusterNode('test.io', Status.IN_PROGRESS)]
+    def clusterNodes = [new ClusterNode(hostname:  'test.io', status: Status.IN_PROGRESS)]
     def cluster = new Cluster(
-      environmentNm,
-      clusterNm,
-      clusterConfig,
-      clusterNodes
+      envName: environmentNm,
+      name: clusterNm,
+      config: clusterConfig,
+      nodes: clusterNodes
     )
 
     when:
@@ -223,8 +215,7 @@ class ClusterResourceSpec extends Specification {
     expect result, equalTo(cluster)
   }
 
-  @PendingFeature
-  def 'GetCluster throws a NotFoundException if no cluster exists'() {
+def 'GetCluster throws a NotFoundException if no cluster exists'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -255,8 +246,7 @@ class ClusterResourceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
-  def 'GetCustomerKubeconfig returns a valid result'() {
+def 'GetCustomerKubeconfig returns a valid result'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -270,8 +260,7 @@ class ClusterResourceSpec extends Specification {
     expect result, equalTo(customerKubeconfig)
   }
 
-  @PendingFeature
-  def 'GetCustomerKubeconfig throws a NotFoundException if no cluster exists'() {
+def 'GetCustomerKubeconfig throws a NotFoundException if no cluster exists'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
@@ -287,8 +276,7 @@ class ClusterResourceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
-  def 'GetCustomerKubeconfig throws a InProgressException if the cluster bootstrap is still processing'() {
+def 'GetCustomerKubeconfig throws a InProgressException if the cluster bootstrap is still processing'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'

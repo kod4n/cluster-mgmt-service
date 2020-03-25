@@ -8,13 +8,13 @@ import io.cratekube.clustermgmt.model.Cluster
 import io.cratekube.clustermgmt.model.ClusterNode
 import io.cratekube.clustermgmt.model.Kubeconfig
 import io.cratekube.clustermgmt.model.Status
-import io.cratekube.clustermgmt.model.hbs.CustomerKubeconfig
 import io.cratekube.clustermgmt.resources.request.BootstrapRequest
-import spock.lang.PendingFeature
 
 import static javax.ws.rs.client.Entity.json
 import static org.hamcrest.Matchers.containsString
 import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.everyItem
+import static org.hamcrest.Matchers.hasProperty
 import static org.hamcrest.Matchers.notNullValue
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -36,7 +36,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(401)
   }
 
-  @PendingFeature
   def 'Bootstrap request should return a 201 created response with location header set'() {
     given:
     def hostnms = ['test.io', 'test-2.io']
@@ -54,7 +53,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     }
   }
 
-  @PendingFeature
   def 'Bootstrap request should return a 409 conflict response if a bootstrap is in progress for a cluster'() {
     given:
     def hostnms = ['test.io', 'test-2.io']
@@ -69,7 +67,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(409)
   }
 
-  @PendingFeature
   def 'Bootstrap request should return a 409 conflict response if cluster already exists'() {
     given:
     def hostnms = ['test.io', 'test-2.io']
@@ -93,7 +90,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(401)
   }
 
-  @PendingFeature
   def 'Delete request should return a 202 accepted response with location header set'() {
     when:
     def response = requestWithAdminToken("/${clusterNm}").delete()
@@ -101,13 +97,12 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     then:
     expect response, notNullValue()
     verifyAll(response) {
-      expect status, equalTo(201)
+      expect status, equalTo(202)
       expect location, notNullValue()
       expect location.path, containsString("/environment/${environmentNm}/cluster/${clusterNm}")
     }
   }
 
-  @PendingFeature
   def 'Delete request should return a 404 not found response if cluster does not exist'() {
     given:
     clusters.destroyCluster(environmentNm, clusterNm) >> {throw new NotFoundException()}
@@ -120,7 +115,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(404)
   }
 
-  @PendingFeature
   def 'Delete request should return a 409 conflict response if cluster bootstrap is in progress'() {
     given:
     clusters.destroyCluster(environmentNm, clusterNm) >> {throw new InProgressException()}
@@ -133,16 +127,15 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(409)
   }
 
-  @PendingFeature
   def 'Get cluster request should return a 200 response and a cluster'() {
     given:
     def clusterConfig = 'cluster config yaml'
-    def clusterNodes = [new ClusterNode('test.io', Status.IN_PROGRESS)]
+    def clusterNodes = [new ClusterNode(hostname: 'test.io', status: Status.IN_PROGRESS)]
     def cluster = new Cluster(
-      environmentNm,
-      clusterNm,
-      clusterConfig,
-      clusterNodes
+      envName: environmentNm,
+      name: clusterNm,
+      config: clusterConfig,
+      nodes: clusterNodes
     )
     clusters.getCluster(environmentNm, clusterNm) >> cluster
     when:
@@ -152,10 +145,14 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     then:
     expect response, notNullValue()
     expect response.status, equalTo(200)
-    expect clusterResponse, equalTo(cluster)
+    verifyAll(clusterResponse) {
+      expect envName, equalTo(environmentNm)
+      expect name, equalTo(clusterNm)
+      expect config, equalTo(clusterConfig)
+      expect clusterNodes, everyItem(hasProperty('status', equalTo(Status.IN_PROGRESS)))
+    }
   }
 
-  @PendingFeature
   def 'Get cluster request should return a 404 not found if a cluster does not exist'() {
     given:
     clusters.getCluster(environmentNm, clusterNm) >> {throw new NotFoundException()}
@@ -168,7 +165,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(404)
   }
 
-  @PendingFeature
   def 'Get customer kubeconfig request should return a 200 response and kubeconfig'() {
     given:
     def customerKubeconfig = new Kubeconfig('kubeconfig String')
@@ -176,14 +172,13 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
 
     when:
     def response = baseRequest("/${clusterNm}/kubeconfig/customer").get()
-    def customerKubeconfigResponse = response.readEntity(CustomerKubeconfig)
+    def customerKubeconfigResponse = response.readEntity(Kubeconfig)
     then:
     expect response, notNullValue()
     expect response.status, equalTo(200)
     expect customerKubeconfigResponse, equalTo(customerKubeconfig)
   }
 
-  @PendingFeature
   def 'Get customer kubeconfig request should return a 404 not found response if no cluster exists'() {
     given:
     clusters.getCustomerKubeconfig(environmentNm, clusterNm) >> {throw new NotFoundException()}
@@ -195,7 +190,6 @@ class ClusterResourceIntegrationSpec extends BaseIntegrationSpec {
     expect response.status, equalTo(404)
   }
 
-  @PendingFeature
   def 'Get customer kubeconfig request should return a 409 conflict response if the cluster bootstrap is still processing'() {
     given:
     clusters.getCustomerKubeconfig(environmentNm, clusterNm) >> {throw new InProgressException()}

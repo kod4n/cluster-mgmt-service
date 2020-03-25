@@ -1,11 +1,11 @@
 package io.cratekube.clustermgmt.model
 
-import groovy.transform.Immutable
+import groovy.transform.EqualsAndHashCode
 
 /**
  * Represents any resource that can be deployed by Kubernetes.
  */
-@Immutable
+@EqualsAndHashCode
 class ManagedResource {
   /** name of this resource. also used as base filename */
   String name

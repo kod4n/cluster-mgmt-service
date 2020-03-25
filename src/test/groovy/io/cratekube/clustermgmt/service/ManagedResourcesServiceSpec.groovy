@@ -9,10 +9,11 @@ import io.cratekube.clustermgmt.api.exception.NotFoundException
 import io.cratekube.clustermgmt.model.ManagedResource
 import io.cratekube.clustermgmt.model.Status
 import org.apache.commons.vfs2.FileContent
+import org.apache.commons.vfs2.FileName
 import org.apache.commons.vfs2.FileObject
 import org.apache.commons.vfs2.FileSystemManager
+import org.apache.commons.vfs2.Selectors
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -80,16 +81,21 @@ class ManagedResourcesServiceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
   def 'BootstrapManagedResources deploys clusterrolebinding, serviceaccount, generates customer kubeconfig and caches resources'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
 
     // cluster exists with no managed resources
-    subject.getManagedResources(environmentNm, clusterNm) >> []
-    // kubeconfig file location
     String kubeFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeFilePath) >> Mock(FileObject) {
+      exists() >> true
+    }
+
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources"
+    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      findFiles(Selectors.SELECT_FILES) >> null
+    }
 
     // mock for handlebars templateing calls to create namespace
     String cratekubeNamespacePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/cratekube-namespace-namespace.yml"
@@ -108,8 +114,8 @@ class ManagedResourcesServiceSpec extends Specification {
     }
 
     // mock for handlebars templateing calls to create serviceaccount
-    String serviceaccountRoleBindingPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/namespace-admin-serviceaccount.yml"
-    fs.resolveFile(serviceaccountRoleBindingPath) >> Mock(FileObject) {
+    String serviceaccountPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/namespace-admin-serviceaccount.yml"
+    fs.resolveFile(serviceaccountPath) >> Mock(FileObject) {
       getContent() >> Mock(FileContent) {
         getOutputStream() >> GroovyMock(OutputStream)
       }
@@ -127,33 +133,39 @@ class ManagedResourcesServiceSpec extends Specification {
     subject.bootstrapManagedResources(environmentNm, clusterNm)
 
     then:
-    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${cratekubeNamespacePath} -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${cratekubeNamespacePath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
 
-    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${clusterRoleBindingPath} -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${clusterRoleBindingPath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
 
-    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${serviceaccountRoleBindingPath} -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${serviceaccountPath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
 
     1 * kubectl.exec("--kubeconfig ${kubeFilePath} get serviceAccounts namespace-admin --namespace cratekube-namespace -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+      1 * waitForProcessOutput(_ as StringBuffer, _ as StringBuffer) >> { out, err ->
+        out.append '{"secrets": [{"name": "crate-token-78npt"}]}'
+      }
       exitValue() >> 0
     }
 
     1 * kubectl.exec( allOf(startsWith("--kubeconfig ${kubeFilePath} get secrets"), endsWith('--namespace cratekube-namespace -o json'))) >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+      1 * waitForProcessOutput(_ as StringBuffer, _ as StringBuffer) >> { out, err ->
+        out.append '{"data": {"token": "ZXlKaGJHY2lPaUpTVXpJMU5pS"}}'
+      }
       exitValue() >> 0
     }
 
     1 * kubectl.exec("--kubeconfig ${kubeFilePath} config view --flatten --minify -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+      1 * waitForProcessOutput(_ as StringBuffer, _ as StringBuffer) >> { out, err ->
+        out.append '{"clusters": [{"cluster": {"server": "https://127.0.0.1:32781","certificate-authority-data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}]}'
+      }
       exitValue() >> 0
     }
 
@@ -162,13 +174,16 @@ class ManagedResourcesServiceSpec extends Specification {
     expect managedResourceCache["${environmentNm}/${clusterNm}".toString()], everyItem(hasProperty('status', equalTo(Status.COMPLETED)))
   }
 
-  @PendingFeature
   def 'BootstrapManagedResources throws NotFoundException if cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
-    // cluster does not exist
-    subject.getManagedResources(environmentNm, clusterNm) >> {throw new NotFoundException()}
+    // cache empty by default
+    // mock kubeconfig does not exist on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.bootstrapManagedResources(environmentNm, clusterNm)
@@ -177,13 +192,37 @@ class ManagedResourcesServiceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
   def 'BootstrapManagedResources throws AlreadyExistsException if any other managed resources exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
+    def resourceCfg = 'test resource config yaml'
+    def resourceNm = 'resource-name'
+
     // a managed resources already exists
-    subject.getManagedResources(environmentNm, clusterNm) >> [new ManagedResource()]
+    // mock kubeconfig exists on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> true
+    }
+
+    def inStream = GroovyMock(InputStream) {
+      it.text >> resourceCfg
+    }
+    def managedResourceFile = Mock(FileObject) {
+      it.name >> Mock(FileName) {
+        it.baseName >> resourceNm + '.yml'
+      }
+      exists() >> true
+      getContent() >> Mock(FileContent) {
+        getInputStream() >> inStream
+      }
+    }
+
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources"
+    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      findFiles(Selectors.SELECT_FILES) >> [managedResourceFile]
+    }
 
     when:
     subject.bootstrapManagedResources(environmentNm, clusterNm)
@@ -208,7 +247,6 @@ class ManagedResourcesServiceSpec extends Specification {
     'env' | 'cluster' | null
   }
 
-  @PendingFeature
   def 'DeployManagedResource deploys a managed resource successfully'() {
     given:
     def environmentNm = 'test-env'
@@ -216,22 +254,31 @@ class ManagedResourcesServiceSpec extends Specification {
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg)
-    //no resource exists matching resource-name
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> null
+
     // kubeconfig file location
     String kubeFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    // mock kubeconfig exists on filesystem
+    fs.resolveFile(kubeFilePath) >> Mock(FileObject) {
+      exists() >> true
+    }
     // config file location
     String managedResourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
+    // cache empty by default
+    // mock kubeconfig does not exist on filesystem
+    fs.resolveFile(managedResourcePath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.deployManagedResource(environmentNm, clusterNm, managedRes)
 
     then:
-    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${managedResourcePath} -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * kubectl.exec("--kubeconfig ${kubeFilePath} apply -f ${managedResourcePath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
-    1 * fs.resolveFile(managedResourcePath) >> Mock(FileObject) {
+    2 * fs.resolveFile(managedResourcePath) >> Mock(FileObject) {
+      1 * exists() >> false
       1 * getContent() >> Mock(FileContent) {
         1 * getOutputStream() >> GroovyMock(OutputStream)
       }
@@ -240,7 +287,6 @@ class ManagedResourcesServiceSpec extends Specification {
     expect managedResourceCache["${environmentNm}/${clusterNm}".toString()], everyItem(hasProperty('status', equalTo(Status.COMPLETED)))
   }
 
-  @PendingFeature
   def 'DeployManagedResource throws a NotFoundException if no cluster exists'() {
     given:
     def environmentNm = 'test-env'
@@ -248,7 +294,12 @@ class ManagedResourcesServiceSpec extends Specification {
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg)
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> {throw new NotFoundException()}
+
+    // mock kubeconfig does not exist on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.deployManagedResource(environmentNm, clusterNm, managedRes)
@@ -257,7 +308,6 @@ class ManagedResourcesServiceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
   def 'DeployManagedResource throws an AlreadyExistsException if the managed resource already exists'() {
     given:
     def environmentNm = 'test-env'
@@ -265,7 +315,8 @@ class ManagedResourcesServiceSpec extends Specification {
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.COMPLETED)
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> managedRes
+
+    managedResourceCache["${environmentNm}/${clusterNm}".toString()] = [managedRes]
 
     when:
     subject.deployManagedResource(environmentNm, clusterNm, managedRes)
@@ -274,7 +325,6 @@ class ManagedResourcesServiceSpec extends Specification {
     thrown AlreadyExistsException
   }
 
-  @PendingFeature
   def 'DeployManagedResource throws an InProgressException if the managed resource is being created or deleted'() {
     given:
     def environmentNm = 'test-env'
@@ -282,7 +332,7 @@ class ManagedResourcesServiceSpec extends Specification {
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.IN_PROGRESS)
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> managedRes
+    managedResourceCache["${environmentNm}/${clusterNm}".toString()] = [managedRes]
 
     when:
     subject.deployManagedResource(environmentNm, clusterNm, managedRes)
@@ -308,7 +358,6 @@ class ManagedResourcesServiceSpec extends Specification {
     'env' | 'cluster' | ''
   }
 
-  @PendingFeature
   def 'RemoveManagedResource should successfully remove a managed resource that exists'() {
     given:
     def environmentNm = 'test-env'
@@ -318,14 +367,14 @@ class ManagedResourcesServiceSpec extends Specification {
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.COMPLETED)
     String kubeFilePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
     String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> managedRes
+    managedResourceCache["${environmentNm}/${clusterNm}".toString()] = [managedRes]
 
     when:
     subject.removeManagedResource(environmentNm, clusterNm, resourceNm)
 
     then:
-    1 * kubectl.exec("--kubeconfig ${kubeFilePath} delete -f ${resourcePath} -o json") >> GroovyMock(Process) {
-      1 * waitForProcessOutput(_ as OutputStream, _ as OutputStream)
+    1 * kubectl.exec("--kubeconfig ${kubeFilePath} delete -f ${resourcePath}") >> GroovyMock(Process) {
+      1 * waitForProcessOutput(_ as PrintStream, _ as PrintStream)
       exitValue() >> 0
     }
     1 * fs.resolveFile(resourcePath) >> Mock(FileObject) {
@@ -334,13 +383,17 @@ class ManagedResourcesServiceSpec extends Specification {
     expect managedResourceCache["${environmentNm}/${clusterNm}".toString()], not(hasItem(hasProperty('name', equalTo(resourceNm))))
   }
 
-  @PendingFeature
   def 'RemoveManagedResource should throw a NotFoundException if the cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def resourceNm = 'resource-name'
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> {throw new NotFoundException()}
+
+    // mock kubeconfig does not exist on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.removeManagedResource(environmentNm, clusterNm, resourceNm)
@@ -349,30 +402,36 @@ class ManagedResourcesServiceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
   def 'RemoveManagedResource should throw a NotFoundException if the resource does not exist'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def resourceNm = 'resource-name'
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> null
+
+    // mock kubeconfig exists on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> true
+    }
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
+    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      exists() >> false
+    }
 
     when:
     subject.removeManagedResource(environmentNm, clusterNm, resourceNm)
 
     then:
-    thrown InProgressException
+    thrown NotFoundException
   }
 
-  @PendingFeature
-  def 'RemoveManagedResource should  throw a InProgressException if the resource is processing'() {
+  def 'RemoveManagedResource should throw a InProgressException if the resource is processing'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
-    def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.IN_PROGRESS)
-    subject.getManagedResource(environmentNm, clusterNm, resourceNm) >> managedRes
+    managedResourceCache["${environmentNm}/${clusterNm}".toString()] = [new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.IN_PROGRESS)]
 
     when:
     subject.removeManagedResource(environmentNm, clusterNm, resourceNm)
@@ -398,7 +457,6 @@ class ManagedResourcesServiceSpec extends Specification {
     'env' | 'cluster' | ''
   }
 
-  @PendingFeature
   def 'GetManagedResource returns a managed resource when cached'() {
     given:
     def environmentNm = 'test-env'
@@ -420,7 +478,6 @@ class ManagedResourcesServiceSpec extends Specification {
     }
   }
 
-  @PendingFeature
   def 'GetManagedResource returns a managed resource when not cached and exists on filesystem'() {
     given:
     def environmentNm = 'test-env'
@@ -436,9 +493,12 @@ class ManagedResourcesServiceSpec extends Specification {
 
     String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
     def inStream = GroovyMock(InputStream) {
-      text >> resourceCfg
+      it.text >> resourceCfg
     }
     fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      it.name >> Mock(FileName) {
+        it.baseName >> resourceNm + '.yml'
+      }
       exists() >> true
       getContent() >> Mock(FileContent) {
         getInputStream() >> inStream
@@ -457,7 +517,6 @@ class ManagedResourcesServiceSpec extends Specification {
     }
   }
 
-  @PendingFeature
   def 'GetManagedResource throws a NotFoundException when the cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
@@ -515,14 +574,37 @@ class ManagedResourcesServiceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
-  def 'GetManagedResources returns managed resource when cached'() {
+  def 'GetManagedResources returns managed resource when cached and on filesystem'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def resourceCfg = 'test resource config yaml'
     def resourceNm = 'resource-name'
     def managedRes = new ManagedResource(name: resourceNm, config: resourceCfg, status: Status.COMPLETED)
+
+    // mock kubeconfig exists on filesystem
+    String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
+    fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
+      exists() >> true
+    }
+
+    def inStream = GroovyMock(InputStream) {
+      it.text >> resourceCfg
+    }
+    def managedResourceFile = Mock(FileObject) {
+      it.name >> Mock(FileName) {
+        it.baseName >> resourceNm + '.yml'
+      }
+      exists() >> true
+      getContent() >> Mock(FileContent) {
+        getInputStream() >> inStream
+      }
+    }
+
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources"
+    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      findFiles(Selectors.SELECT_FILES) >> [managedResourceFile]
+    }
     managedResourceCache["${environmentNm}/${clusterNm}".toString()] = [managedRes]
 
     when:
@@ -535,7 +617,6 @@ class ManagedResourcesServiceSpec extends Specification {
     expect result, hasItem(hasProperty('name', equalTo(resourceNm)))
   }
 
-  @PendingFeature
   def 'GetManagedResources returns managed resource when not cached but on filesystem'() {
     given:
     def environmentNm = 'test-env'
@@ -549,15 +630,22 @@ class ManagedResourcesServiceSpec extends Specification {
       exists() >> true
     }
 
-    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
     def inStream = GroovyMock(InputStream) {
-      text >> resourceCfg
+      it.text >> resourceCfg
     }
-    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+    def managedResourceFile = Mock(FileObject) {
+      it.name >> Mock(FileName) {
+        it.baseName >> resourceNm + '.yml'
+      }
       exists() >> true
       getContent() >> Mock(FileContent) {
         getInputStream() >> inStream
       }
+    }
+
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources"
+    fs.resolveFile(resourcePath) >> Mock(FileObject) {
+      findFiles(Selectors.SELECT_FILES) >> [managedResourceFile]
     }
 
     when:
@@ -574,17 +662,16 @@ class ManagedResourcesServiceSpec extends Specification {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
-    def resourceNm = 'resource-name'
-
+    // defaults to empty cache
     // mock kubeconfig exists on filesystem
     String kubeconfigPath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/kube_config_cluster.yml"
     fs.resolveFile(kubeconfigPath) >> Mock(FileObject) {
       exists() >> true
     }
 
-    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources/${resourceNm}.yml"
+    String resourcePath = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/resources"
     fs.resolveFile(resourcePath) >> Mock(FileObject) {
-      exists() >> false
+      findFiles(Selectors.SELECT_FILES) >> null
     }
 
     when:
@@ -595,7 +682,6 @@ class ManagedResourcesServiceSpec extends Specification {
     expect result, is(empty())
   }
 
-  @PendingFeature
   def 'GetManagedResources throws a NotFoundException when the cluster does not exist'() {
     given:
     def environmentNm = 'test-env'

@@ -6,12 +6,11 @@ import io.cratekube.clustermgmt.api.exception.InProgressException
 import io.cratekube.clustermgmt.api.exception.NotFoundException
 import io.cratekube.clustermgmt.dropwizard.auth.User
 import io.cratekube.clustermgmt.model.ManagedResource
-import io.cratekube.clustermgmt.model.Status
 import org.valid4j.errors.RequireViolation
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static io.cratekube.clustermgmt.model.Status.COMPLETED
 import static org.hamcrest.Matchers.containsString
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.notNullValue
@@ -51,7 +50,6 @@ class ManagedResourcesResourceSpec extends Specification {
     'env' | 'cluster' | new ManagedResource() | null
   }
 
-  @PendingFeature
   def 'CreateManagedResource returns a valid result'() {
     given:
     def environmentNm = 'test-env'
@@ -72,7 +70,6 @@ class ManagedResourcesResourceSpec extends Specification {
     }
   }
 
-  @PendingFeature
   def 'CreateManagedResource throws a InProgressException if the managed resource creation is in progress'() {
     given:
     def environmentNm = 'test-env'
@@ -87,7 +84,6 @@ class ManagedResourcesResourceSpec extends Specification {
     thrown InProgressException
   }
 
-  @PendingFeature
   def 'CreateManagedResource throws a AlreadyExistsException if the managed resource already exists'() {
     given:
     def environmentNm = 'test-env'
@@ -102,7 +98,6 @@ class ManagedResourcesResourceSpec extends Specification {
     thrown AlreadyExistsException
   }
 
-  @PendingFeature
   def 'CreateManagedResource throws a NotFoundException if the cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
@@ -135,7 +130,6 @@ class ManagedResourcesResourceSpec extends Specification {
     'env' | 'cluster' | 'resource' | null
   }
 
-  @PendingFeature
   def 'DeleteManagedResource returns a valid result'() {
     given:
     def environmentNm = 'test-env'
@@ -155,7 +149,6 @@ class ManagedResourcesResourceSpec extends Specification {
     }
   }
 
-  @PendingFeature
   def 'DeleteManagedResource throws a InProgressException if the managed resource creation is in progress'() {
     given:
     def environmentNm = 'test-env'
@@ -170,7 +163,6 @@ class ManagedResourcesResourceSpec extends Specification {
     thrown InProgressException
   }
 
-  @PendingFeature
   def 'DeleteManagedResource throws a NotFoundException if the cluster or managed resource does not exist'() {
     given:
     def environmentNm = 'test-env'
@@ -202,13 +194,12 @@ class ManagedResourcesResourceSpec extends Specification {
     'env' | 'cluster' | ''
   }
 
-  @PendingFeature
   def 'GetManagedResource returns a valid result'() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def resName = 'test-resource'
-    def mngdRes = new ManagedResource(resName, 'test-config', Status.COMPLETED)
+    def mngdRes = new ManagedResource(name: resName, config: 'test-config', status: COMPLETED)
 
     when:
     def result = subject.getManagedResource(environmentNm, clusterNm, resName)
@@ -219,7 +210,6 @@ class ManagedResourcesResourceSpec extends Specification {
     expect result, equalTo(mngdRes)
   }
 
-  @PendingFeature
   def 'GetManagedResource throws a NotFoundException if the cluster does not exist'() {
     given:
     def environmentNm = 'test-env'
@@ -234,7 +224,6 @@ class ManagedResourcesResourceSpec extends Specification {
     thrown NotFoundException
   }
 
-  @PendingFeature
   def 'GetManagedResource throws a NotFoundException if the managed resource does not exist'() {
     given:
     def environmentNm = 'test-env'
@@ -264,14 +253,13 @@ class ManagedResourcesResourceSpec extends Specification {
     'env' | ''
   }
 
-  @PendingFeature
   def "GetManagedResources returns valid results"() {
     given:
     def environmentNm = 'test-env'
     def clusterNm = 'test-cluster'
     def mngdRes = [
-      new ManagedResource('test-resource', 'test-config', Status.COMPLETED),
-      new ManagedResource('test-resource-2', 'test-config-2', Status.COMPLETED)
+      new ManagedResource(name: 'test-resource', config: 'test-config', status: COMPLETED),
+      new ManagedResource(name: 'test-resource-2', config: 'test-config-2', status: COMPLETED)
     ]
 
     when:
@@ -283,7 +271,6 @@ class ManagedResourcesResourceSpec extends Specification {
     expect result, equalTo(mngdRes)
   }
 
-  @PendingFeature
   def 'GetManagedResources throws a NotFoundException if no cluster exists'() {
     given:
     def environmentNm = 'test-env'
