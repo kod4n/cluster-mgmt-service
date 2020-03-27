@@ -122,7 +122,7 @@ class ManagedResourcesServiceSpec extends Specification {
     }
 
     // mock for handlebars templateing calls to create customer kubeconfig
-    String customerKubeconfig = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/customer_kubeconfig.yml"
+    String customerKubeconfig = "${config.configLocation}/environment/${environmentNm}/cluster/${clusterNm}/customer_kube_config.yml"
     fs.resolveFile(customerKubeconfig) >> Mock(FileObject) {
       getContent() >> Mock(FileContent) {
         getOutputStream() >> GroovyMock(OutputStream)

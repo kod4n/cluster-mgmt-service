@@ -148,7 +148,7 @@ class ManagedResourcesService implements ManagedResourcesApi {
     def server = configJson.clusters[0].cluster.server
 
     // write customer kubeconfig to file
-    String customerKubeconfigPath = "${clusterPath}/customer_kubeconfig.yml"
+    String customerKubeconfigPath = "${clusterPath}/customer_kube_config.yml"
     log.debug 'Writing customer kubeconfig to [{}]', customerKubeconfigPath
     def customerKubeconfigYml = fs.resolveFile(customerKubeconfigPath)
     def template = handlebars.compile('customer-kubeconfig.yaml')
