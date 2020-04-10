@@ -92,7 +92,7 @@ class ManagedResourcesService implements ManagedResourcesApi {
     [
       [name: cratekubeNamespaceName, templateName: 'namespace.yaml', ymlPath: cratekubeNamespacePath, configObject: new  Namespace(cratekubeNamespace)],
       [name: serviceaccountName, templateName: 'rbac/serviceaccounts/service-account.yaml', ymlPath: serviceaccountPath, configObject: new  ServiceAccount(namespaceAdmin, cratekubeNamespace)],
-      [name: clusterRoleBindingName, templateName: 'rbac/clusterrolebindings/serviceaccount:cluster-admin.yaml', ymlPath: clusterRoleBindingPath, configObject: new  ClusterRoleBinding('cluster-admin:namespace-admin', namespaceAdmin, cratekubeNamespace)],
+      [name: clusterRoleBindingName, templateName: 'rbac/clusterrolebindings/serviceaccount-cluster-admin.yaml', ymlPath: clusterRoleBindingPath, configObject: new  ClusterRoleBinding('cluster-admin:namespace-admin', namespaceAdmin, cratekubeNamespace)],
     ].each { bootstrapResource ->
       def template = handlebars.compile(bootstrapResource.templateName)
       def ymlPath = fs.resolveFile(bootstrapResource.ymlPath)
