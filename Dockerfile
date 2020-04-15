@@ -50,6 +50,14 @@ ENV CRATEKUBE_APP cluster-mgmt-service
 
 ## add in files needed at runtime
 WORKDIR /app
+RUN apk --no-cache add bash curl openssl &&\
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.3/bin/linux/amd64/kubectl &&\
+    mv kubectl /bin/kubectl &&\
+    chmod +x /bin/kubectl &&\
+    curl -L -o rke_linux-amd64  https://github.com/rancher/rke/releases/download/v0.3.2/rke_linux-amd64 &&\
+    mv rke_linux-amd64 /bin/rke &&\
+    chmod +x /bin/rke
+
 COPY app.yml entrypoint.sh ./
 COPY --from=build /app/build/libs/${CRATEKUBE_APP}-*-all.jar /app/${CRATEKUBE_APP}.jar
 ENTRYPOINT ["/app/entrypoint.sh"]
