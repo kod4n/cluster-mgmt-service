@@ -18,7 +18,7 @@ swagger:
 
 rke:
   nodeUser: ${RKE_NODE_USER:-ubuntu}
-  sshKeyPath: ${RKE_PRIVATE_KEY_PATH:~/.ssh/id_rsa}
+  sshKeyPath: ${RKE_PRIVATE_KEY_PATH:-~/.ssh/id_rsa}
 
 configLocation: ${CONFIG_LOCATION:-/app/config}
 
