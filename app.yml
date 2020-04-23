@@ -19,6 +19,7 @@ swagger:
 rke:
   nodeUser: ${RKE_NODE_USER:-ubuntu}
   sshKeyPath: ${RKE_PRIVATE_KEY_PATH:-~/.ssh/id_rsa}
+  podSecurityPolicyEnabled: ${RKE_POD_SECURITY_POLICY_ENABLED:-false}
 
 configLocation: ${CONFIG_LOCATION:-/app/config}
 

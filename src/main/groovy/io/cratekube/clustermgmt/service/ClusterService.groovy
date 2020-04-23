@@ -109,8 +109,11 @@ class ClusterService implements ClusterApi {
       // create cluster config using template in the resources directory
       def handlebars = new Handlebars().with { registerHelpers(StringHelpers) }
       def template = handlebars.compile('rke-cluster-config')
-      def rkeClusterConfig = new RkeClusterConfig(sshKeyPath: config.rke.sshKeyPath, rkeClusterNodes: nodes)
-
+      def rkeClusterConfig = new RkeClusterConfig(
+        sshKeyPath: config.rke.sshKeyPath,
+        podSecurityPolicyEnabled: config.rke.podSecurityPolicyEnabled,
+        rkeClusterNodes: nodes
+      )
       // config file should be saved
       String clusterYmlPath = "${config.configLocation}/environment/${envName}/cluster/${clusterName}/cluster.yml"
       def clusterYml = fs.resolveFile(clusterYmlPath)
