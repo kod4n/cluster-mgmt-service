@@ -9,6 +9,8 @@ import groovy.transform.Immutable
 class RkeClusterConfig {
   /** path to SSH key used by RKE to access a node */
   String sshKeyPath
+  /** whether or not pod security policy is enabled */
+  Boolean podSecurityPolicyEnabled
   /** config for cluster nodes */
   List<RkeClusterNode> rkeClusterNodes
 }

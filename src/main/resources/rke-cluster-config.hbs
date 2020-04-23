@@ -11,5 +11,5 @@ services:
     creation: 6h
     retention: 24h
   kube-api:
-    pod_security_policy: true
+    pod_security_policy: {{podSecurityPolicyEnabled}}
     always_pull_images: true
