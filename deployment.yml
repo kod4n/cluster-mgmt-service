@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster-mgmt-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: http
+  selector:
+    name: cluster-mgmt-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-mgmt-service-deployment
+spec:
+  selector:
+    matchLabels:
+      name: cluster-mgmt-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: cluster-mgmt-service
+    spec:
+      containers:
+        - name: cluster-mgmt-service
+          image: cratekube/cluster-mgmt-service:latest
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - mountPath: /app/kube/
+              name: kube-config-volume
+          env:
+            - name: RKE_NODE_USER
+              value: ec2-user
+            - name: RKE_PRIVATE_KEY_PATH
+              value: /app/kube/cratekube_rsa
+            - name: RKE_POD_SECURITY_POLICY_ENABLED
+              value: false
+      volumes:
+        - name: kube-config-volume
+          hostPath:
+            # directory where kubeconfig is located on host
+            path: /var/lib/cratekube/
