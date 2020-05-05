@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: cluster-mgmt-service
-          image: cratekube/cluster-mgmt-service:1.0.0
+          image: cratekube/cluster-mgmt-service:latest
           ports:
             - containerPort: 9000
           volumeMounts:
