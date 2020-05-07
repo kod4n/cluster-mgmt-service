@@ -26,7 +26,7 @@ configLocation: ${CONFIG_LOCATION:-/app/config}
 auth:
   apiKeys:
     - name: admin
-      key: ${ADMIN_APIKEY:-eknvDrmcDtseeieSMTvngo}
+      key: ${ADMIN_APIKEY:-}
       roles: ['admin']
 
 jerseyClient:
