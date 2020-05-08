@@ -5,11 +5,11 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 9001
-      targetPort: 9000
-      nodePort: 30001
-      protocol: TCP
-      name: http
+  - port: 9001
+    targetPort: 9000
+    nodePort: 30001
+    protocol: TCP
+    name: http
   selector:
     name: cluster-mgmt-service
 ---
@@ -28,24 +28,29 @@ spec:
         name: cluster-mgmt-service
     spec:
       containers:
-        - name: cluster-mgmt-service
-          image: cratekube/cluster-mgmt-service:1.0.0
-          ports:
-            - containerPort: 9000
-          volumeMounts:
-            - mountPath: /app/kube/cratekube_rsa
-              name: rke-ssh-volume
-            - mountPath: /app/config/
-              name: config-volume
-          env:
-            - name: RKE_PRIVATE_KEY_PATH
-              value: /app/kube/cratekube_rsa
-            - name: RKE_NODE_USER
-              value: ec2-user
+       - name: cluster-mgmt-service
+         image: cratekube/cluster-mgmt-service:1.0.0
+         ports:
+         - containerPort: 9000
+         volumeMounts:
+         - mountPath: /app/kube/cratekube_rsa
+           name: rke-ssh-volume
+         - mountPath: /app/config/
+           name: config-volume
+         env:
+         - name: RKE_PRIVATE_KEY_PATH
+           value: /app/kube/cratekube_rsa
+         - name: RKE_NODE_USER
+           value: ec2-user
+         - name: ADMIN_APIKEY
+           valueFrom:
+            secretKeyRef:
+             name: cratekube-api-secret
+             key: admin-api-key
       volumes:
-        - name: rke-ssh-volume
-          hostPath:
-            path: /var/lib/cratekube/cratekube_rsa
-        - name: config-volume
-          hostPath:
-            path: /var/lib/cratekube/cluster-mgmt-service/config/
+       - name: rke-ssh-volume
+         hostPath:
+          path: /var/lib/cratekube/cratekube_rsa
+       - name: config-volume
+         hostPath:
+          path: /var/lib/cratekube/cluster-mgmt-service/config/

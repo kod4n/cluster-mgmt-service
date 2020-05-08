@@ -4,6 +4,7 @@ import groovy.transform.Memoized
 import io.cratekube.clustermgmt.api.ClusterApi
 import io.cratekube.clustermgmt.api.ManagedResourcesApi
 import org.spockframework.mock.MockUtil
+import ru.vyarus.dropwizard.guice.test.spock.ConfigOverride
 import ru.vyarus.dropwizard.guice.test.spock.UseDropwizardApp
 import spock.lang.Specification
 
@@ -15,7 +16,10 @@ import javax.ws.rs.client.Invocation
  * Base class for all integration specs. This class provides a client for interacting with the
  * Dropwizard application's API.
  */
-@UseDropwizardApp(value = App, hooks = IntegrationSpecHook, config = 'app.yml')
+@UseDropwizardApp(value = App, hooks = IntegrationSpecHook, config = 'app.yml',
+                  configOverride = [
+                    @ConfigOverride(key = 'auth.apiKeys[0].key', value = 'eknvDrmcDtseeieSMTvngo'),
+                  ])
 abstract class BaseIntegrationSpec extends Specification {
   MockUtil mockUtil = new MockUtil()
   @Inject Client client
