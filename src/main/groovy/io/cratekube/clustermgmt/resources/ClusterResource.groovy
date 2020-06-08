@@ -57,7 +57,7 @@ class ClusterResource {
   @RolesAllowed('admin')
   Response bootstrapCluster(
     @PathParam('envName') String envName,
-    @Valid BootstrapRequest bootstrapRequest,
+    @ApiParam @Valid BootstrapRequest bootstrapRequest,
     @ApiParam(hidden = true) @Auth User user
   ) {
     require envName, notEmptyString()
